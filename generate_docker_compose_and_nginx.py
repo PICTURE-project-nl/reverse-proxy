@@ -5,6 +5,8 @@ import re
 environment = os.getenv("ENVIRONMENT", "localhost")
 server_url = os.getenv("SERVER_URL", "localhost")
 network_prefix = os.getenv("NETWORK_PREFIX")
+letsencrypt_directory = os.getenv("LETSENCRYPT_DIRECTORY")
+letsencrypt_key_directory = os.getenv("LETSENCRYPT_KEY_DIRECTORY")
 
 # Strip protocol (http:// or https://) from server_url if present
 server_url = re.sub(r'^https?://', '', server_url)
@@ -70,6 +72,7 @@ http {
 """
 
 nginx_conf_server = f"""
+
 worker_processes  5;
 worker_rlimit_nofile 8192;
 
@@ -93,12 +96,12 @@ http {{
   server {{
     listen 80;
     listen 443 ssl;
-    server_name {server_url};
+    server_name tool.pictureproject.nl;
 
-    ssl_certificate /etc/letsencrypt/live/{server_url}/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/{server_url}/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    ssl_certificate {letsencrypt_key_directory}fullchain.pem;
+    ssl_certificate_key {letsencrypt_key_directory}privkey.pem;
+    include {letsencrypt_directory}/options-ssl-nginx.conf;
+    ssl_dhparam {letsencrypt_directory}/ssl-dhparams.pem;
 
     location / {{
       proxy_pass http://frontend:8000;
@@ -113,6 +116,7 @@ http {{
     }}
   }}
 }}
+
 """
 
 # Define Docker Compose configuration templates
@@ -151,14 +155,14 @@ services:
       - proxy
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf
+      - "{letsencrypt_directory}:/etc/letsencrypt/"
       - ./options-ssl-nginx.conf:/etc/letsencrypt/options-ssl-nginx.conf
-      - "certificates:/etc/letsencrypt/"
     restart: always
 
 networks:
   proxy:
     external: true
-    name: "{network_prefix}_proxy"
+    name: "2ef2919d1441cd450c6ec711ec5cd65c464912dab371ad6f76640f93055f7edd_proxy"
 volumes:
   certificates:
 """
