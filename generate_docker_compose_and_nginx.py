@@ -105,6 +105,18 @@ http {{
 
     location / {{
       proxy_pass http://frontend:8000;
+      proxy_set_header Host $host;
+      proxy_set_header X-Real-IP $remote_addr;
+      proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+      proxy_set_header X-Forwarded-Proto $scheme;
+    }}
+
+    location /storage/ {{
+        proxy_pass http://api:80;
+        add_header Access-Control-Allow-Origin "*";
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS";
+        add_header Access-Control-Allow-Headers "Authorization, Content-Type";
+        add_header Access-Control-Allow-Credentials "true";
     }}
 
     location /api {{
